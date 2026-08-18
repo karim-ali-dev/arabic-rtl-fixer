@@ -20,6 +20,12 @@
 >
 > **الحل هنا!** 👇
 
+<br>
+
+<img src="screenshot.png" alt="Arabic RTL Fixer Screenshot" width="400">
+
+<br>
+
 </div>
 
 <br>
