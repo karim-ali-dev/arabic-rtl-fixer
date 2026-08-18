@@ -227,7 +227,13 @@ class ArabicFixerApp:
     def _get_font(self, size_key="input_font_size"):
         size = self.config.get(size_key, 14)
         if self.custom_font:
-            return self.custom_font.copy(size=size)
+            try:
+                return self.custom_font.copy(size=size)
+            except TypeError:
+                return tkfont.Font(
+                    family=self.custom_font.cget("family"),
+                    size=size,
+                )
         return ("Segoe UI", size)
 
     def _build_ui(self):
