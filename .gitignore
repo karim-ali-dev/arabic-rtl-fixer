@@ -1,0 +1,10 @@
+build/
+dist/
+*.spec
+__pycache__/
+*.pyc
+config.json
+history.json
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>إصلاح النص العربي - Affinity RTL Fixer</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: #1a1a2e;
+  color: #eee;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 20px;
+}
+h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: #e94560;
+}
+.subtitle {
+  color: #888;
+  margin-bottom: 25px;
+  font-size: 14px;
+}
+.container {
+  width: 100%;
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+label {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 4px;
+  display: block;
+}
+textarea {
+  width: 100%;
+  height: 150px;
+  background: #16213e;
+  border: 2px solid #0f3460;
+  color: #fff;
+  font-size: 22px;
+  padding: 15px;
+  border-radius: 10px;
+  resize: vertical;
+  font-family: 'GraphicSchool Regular', 'Segoe UI', Tahoma, sans-serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+}
+textarea:focus {
+  outline: none;
+  border-color: #e94560;
+}
+.output-area {
+  width: 100%;
+  min-height: 150px;
+  background: #0f3460;
+  border: 2px solid #533483;
+  color: #fff;
+  font-size: 22px;
+  padding: 15px;
+  border-radius: 10px;
+  font-family: 'GraphicSchool Regular', 'Segoe UI', Tahoma, sans-serif;
+  direction: rtl;
+  text-align: right;
+  line-height: 1.8;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+.btn-fix {
+  background: #e94560;
+  color: #fff;
+}
+.btn-fix:hover { background: #c73650; }
+.btn-copy {
+  background: #533483;
+  color: #fff;
+}
+.btn-copy:hover { background: #7b4fb5; }
+.btn-clear {
+  background: #333;
+  color: #ccc;
+}
+.btn-clear:hover { background: #555; }
+.toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #27ae60;
+  color: #fff;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.options {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 14px;
+}
+.options input[type="checkbox"] {
+  accent-color: #e94560;
+  width: 18px;
+  height: 18px;
+}
+.font-select {
+  background: #16213e;
+  color: #fff;
+  border: 2px solid #0f3460;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.info {
+  background: #16213e;
+  padding: 15px;
+  border-radius: 10px;
+  border-right: 4px solid #e94560;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.8;
+}
+.info strong { color: #e94560; }
+</style>
+</head>
+<body>
+
+<h1>أداة إصلاح النص العربي لأفينتي</h1>
+<p class="subtitle">Arabic RTL Fixer for Affinity Designer / Photo / Publisher</p>
+
+<div class="container">
+  <div class="info">
+    <strong>الاستخدام:</strong> اكتب النص العربي هنا ← اضغط "إصلاح النص" ← انسخ النص من المربع السفلي ← الصقه في Affinity
+  </div>
+
+  <div>
+    <label>النص العربي الأصلي:</label>
+    <textarea id="inputText" placeholder="اكتب أو الصق النص العربي هنا..."></textarea>
+  </div>
+
+  <div class="options">
+    <label>
+      <input type="checkbox" id="doReshape" checked>
+      ربط الحروف (Reshape)
+    </label>
+    <label>
+      <input type="checkbox" id="doReverse" checked>
+      عكس ترتيب الكلمات
+    </label>
+    <label>
+      <input type="checkbox" id="doReverseChars">
+      عكس ترتيب الحروف
+    </label>
+    <label>
+      الخط:
+      <select class="font-select" id="fontSelect">
+        <option value="GraphicSchool Regular">GraphicSchool</option>
+        <option value="Segoe UI">Segoe UI</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="Arial">Arial</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-fix" onclick="fixText()">إصلاح النص</button>
+    <button class="btn-copy" onclick="copyResult()">نسخ النص</button>
+    <button class="btn-clear" onclick="clearAll()">مسح الكل</button>
+  </div>
+
+  <div>
+    <label>النص بعد الإصلاح (انسخ من هنا):</label>
+    <div class="output-area" id="outputText"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">تم النسخ!</div>
+
+<script>
+const arabicToPresentation = {
+  '\u0621': '\uFE8D', // Hamza
+  '\u0622': ['\uFE82', '\uFE81'], // Alef with Madda
+  '\u0623': ['\uFE84', '\uFE83'], // Alef with Hamza above
+  '\u0624': ['\uFE86', '\uFE85'], // Waw with Hamza
+  '\u0625': ['\uFE88', '\uFE87'], // Alef with Hamza below
+  '\u0626': ['\uFE8A', '\uFE8C', '\uFE8B', '\uFE8E', '\uFE8D'], // Yeh with Hamza
+  '\u0627': ['\uFE8E', '\uFE8D'], // Alef
+  '\u0628': ['\uFE90', '\uFE92', '\uFE91', '\uFE94', '\uFE93'], // Beh
+  '\u062A': ['\uFE96', '\uFE98', '\uFE97', '\uFE9A', '\uFE99'], // Teh
+  '\u062B': ['\uFE9A', '\uFE9C', '\uFE9B', '\uFE9E', '\uFE9D'], // Theh
+  '\u062C': ['\uFE9E', '\uFEA0', '\uFE9F', '\uFEA2', '\uFEA1'], // Jeem
+  '\u062D': ['\uFEA2', '\uFEA4', '\uFEA3', '\uFEA6', '\uFEA5'], // Hah
+  '\u062E': ['\uFEA6', '\uFEA8', '\uFEA7', '\uFEAA', '\uFEA9'], // Khah
+  '\u062F': ['\uFEAA', '\uFEAB'], // Dal
+  '\u0630': ['\uFEAC', '\uFEAD'], // Thal
+  '\u0631': ['\uFEAE', '\uFEAF'], // Reh
+  '\u0632': ['\uFEB0', '\uFEB1'], // Zain
+  '\u0633': ['\uFEB2', '\uFEB4', '\uFEB3', '\uFEB6', '\uFEB5'], // Seen
+  '\u0634': ['\uFEB6', '\uFEB8', '\uFEB7', '\uFEBA', '\uFEB9'], // Sheen
+  '\u0635': ['\uFEBA', '\uFEBC', '\uFEBB', '\uFEBE', '\uFEBD'], // Sad
+  '\u0636': ['\uFEBE', '\uFEC0', '\uFEBF', '\uFEC2', '\uFEC1'], // Dad
+  '\u0637': ['\uFEC2', '\uFEC4', '\uFEC3', '\uFEC6', '\uFEC5'], // Tah
+  '\u0638': ['\uFEC6', '\uFEC8', '\uFEC7', '\uFECA', '\uFEC9'], // Zah
+  '\u0639': ['\uFECA', '\uFECC', '\uFECB', '\uFECE', '\uFECD'], // Ain
+  '\u063A': ['\uFECE', '\uFED0', '\uFECF', '\uFED2', '\uFED1'], // Ghain
+  '\u0640': '\u0640', // Tatweel
+  '\u0641': ['\uFED2', '\uFED4', '\uFED3', '\uFED6', '\uFED5'], // Feh
+  '\u0642': ['\uFED6', '\uFED8', '\uFED7', '\uFEDA', '\uFED9'], // Qaf
+  '\u0643': ['\uFEDA', '\uFEDC', '\uFEDB', '\uFEDE', '\uFEDD'], // Kaf
+  '\u0644': ['\uFEDE', '\uFEE0', '\uFEDF', '\uFEE2', '\uFEE1'], // Lam
+  '\u0645': ['\uFEE2', '\uFEE4', '\uFEE3', '\uFEE6', '\uFEE5'], // Meem
+  '\u0646': ['\uFEE6', '\uFEE8', '\uFEE7', '\uFEEA', '\uFEE9'], // Noon
+  '\u0647': ['\uFEEA', '\uFEEC', '\uFEEB', '\uFEEE', '\uFEED'], // Heh
+  '\u0648': ['\uFEEE', '\uFEEF'], // Waw
+  '\u0649': ['\uFEEF', '\uFEF0', '\uFEF3', '\uFEF2', '\uFEF1'], // Alef Maqsura / Yeh
+  '\u064A': ['\uFEF2', '\uFEF4', '\uFEF3', '\uFEF6', '\uFEF5'], // Yeh
+  '\u064B': '\uFE70', // Fathatan
+  '\u064C': '\uFE72', // Dammatan
+  '\u064D': '\uFE76', // Kasratan
+  '\u064E': '\uFE78', // Fatha
+  '\u064F': '\uFE7A', // Damma
+  '\u0650': '\uFE7E', // Kasra
+  '\u0651': '\uFE80', // Shadda
+  '\u0652': '\uFE82', // Sukun (mapped)
+  '\u0670': '\u0670', // Superscript Alef
+  '\u0671': ['\uFB51', '\uFB50'], // Alef Wasla
+  '\u0677': ['\uFB58', '\uFB57'], // U with Hamza above
+  '\u0679': ['\uFB68', '\uFB66', '\uFB67', '\uFB6A', '\uFB69'], // Tteh
+  '\u067A': ['\uFB5E', '\uFB5C', '\uFB5D', '\uFB60', '\uFB5F'], // Teh with 2 dots above
+  '\u067B': ['\uFB54', '\uFB52', '\uFB53', '\uFB56', '\uFB55'], // Bih
+  '\u067E': ['\uFB5A', '\uFB58', '\uFB59', '\uFB5C', '\uFB5B'], // Peh
+  '\u067F': ['\uFB60', '\uFB5E', '\uFB5F', '\uFB62', '\uFB61'], // Teh with 4 dots above
+  '\u0680': ['\uFB56', '\uFB54', '\uFB55', '\uFB58', '\uFB57'], // Bih with 4 dots
+  '\u0683': ['\uFB66', '\uFB64', '\uFB65', '\uFB68', '\uFB67'], // Nyeh
+  '\u0684': ['\uFB6C', '\uFB6A', '\uFB6B', '\uFB6E', '\uFB6D'], // Dyeh
+  '\u0686': ['\uFB70', '\uFB6E', '\uFB6F', '\uFB72', '\uFB71'], // Tcheh
+  '\u0688': ['\uFB8A', '\uFB89'], // DDal
+  '\u068C': ['\uFB84', '\uFB83'], // Ddahal
+  '\u068D': ['\uFB82', '\uFB81'], // Ddal
+  '\u068E': ['\uFB80', '\uFB7F'], // Dzeh
+  '\u0691': ['\uFB8C', '\uFB8B'], // Rreh
+  '\u0698': ['\uFB8A', '\uFB89'], // JEH (mapped same as DDal for presentation)
+  '\u06A4': ['\uFB6C', '\uFB6A', '\uFB6B', '\uFB6E', '\uFB6D'], // Veh
+  '\u06A6': ['\uFB6E', '\uFB6C', '\uFB6D', '\uFB70', '\uFB6F'], // Peheh
+  '\u06A9': ['\uFB92', '\uFB90', '\uFB91', '\uFB94', '\uFB93'], // Keheh
+  '\u06AD': ['\uFBD3', '\uFBD1', '\uFBD2', '\uFBD5', '\uFBD4'], // Ng
+  '\u06AF': ['\uFB94', '\uFB92', '\uFB93', '\uFB96', '\uFB95'], // Gaf
+  '\u06B1': ['\uFB9A', '\uFB98', '\uFB99', '\uFB9C', '\uFB9B'], // Ngoeh
+  '\u06B3': ['\uFB9C', '\uFB9A', '\uFB9B', '\uFB9E', '\uFB9D'], // Gueh
+  '\u06BA': ['\uFB9E', '\uFB9F'], // Noon Ghunna (no dots)
+  '\u06BB': ['\uFBA2', '\uFB9E', '\uFB9F', '\uFBA0', '\uFB9F'], // Rnoon
+  '\u06BE': ['\uFBAC', '\uFBAA', '\uFBAB', '\uFBAE', '\uFBAD'], // Heh Doachashmee
+  '\u06C0': ['\uFBAE', '\uFBAF'], // Heh with Hamza above
+  '\u06C1': ['\uFBAE', '\uFBAC', '\uFBAD', '\uFBB0', '\uFAF7'], // Heh Goal
+  '\u06C5': ['\uFBE1', '\uFBE0'], // Kirghiz Eh
+  '\u06C6': ['\uFBE3', '\uFBE2'], // OE
+  '\u06C8': ['\uFBE5', '\uFBE4'], // UI
+  '\u06C9': ['\uFBE7', '\uFBE6'], // Kirghiz Yu
+  '\u06CB': ['\uFBDF', '\uFBDE'], // Ve
+  '\u06D0': ['\uFBEA', '\uFBE8', '\uFBE9', '\uFBEC', '\uFBEB'], // E
+  '\u06D2': ['\uFBA4', '\uFBA5'], // Yeh Barree
+  '\u06D3': ['\uFBA6', '\uFBA5', '\uFBA4', '\uFBA8', '\uFBA7'], // Yeh Barree with Hamza above
+};
+
+const weakLetters = ['\u0627', '\u0622', '\u0623', '\u0625', '\u0647', '\u0648', '\u0649', '\u0624'];
+const rightJoining = ['\u062C', '\u062D', '\u062E', '\u0633', '\u0634', '\u0635', '\u0636', '\u0637', '\u0638', '\u0639', '\u063A', '\u0641', '\u0642', '\u0643', '\u0644', '\u0645', '\u0646', '\u0647', '\u064A', '\u0626', '\u0628', '\u062A', '\u062B', '\u0643'];
+const dualJoining = ['\u062C', '\u062D', '\u062E', '\u0633', '\u0634', '\u0635', '\u0636', '\u0637', '\u0638', '\u0639', '\u063A', '\u0641', '\u0642', '\u0643', '\u0644', '\u0645', '\u0646', '\u0647', '\u064A', '\u0626', '\u0628', '\u062A', '\u062B'];
+const nonJoining = ['\u0621', '\u0622', '\u0623', '\u0624', '\u0625', '\u0627', '\u0629', '\u062F', '\u0630', '\u0631', '\u0632', '\u0648', '\u0649'];
+
+function getCharType(ch) {
+  if (nonJoining.includes(ch)) return 'nonJoining';
+  if (weakLetters.includes(ch)) return 'rightJoining';
+  if (dualJoining.includes(ch)) return 'dualJoining';
+  return 'transparent';
+}
+
+function getPresentationForm(ch, prevState, nextState) {
+  const forms = arabicToPresentation[ch];
+  if (!forms) return ch;
+  if (typeof forms === 'string') return forms;
+
+  const canJoinLeft = prevState === 'right' || prevState === 'both';
+  const canJoinRight = nextState === 'left' || nextState === 'both';
+
+  if (canJoinLeft && canJoinRight) {
+    return forms[2] || forms[0]; // medial
+  } else if (canJoinLeft) {
+    return forms[1] || forms[0]; // final
+  } else if (canJoinRight) {
+    return forms[0]; // initial
+  } else {
+    return forms[forms.length - 1] || forms[0]; // isolated
+  }
+}
+
+function reshapeArabic(text) {
+  const chars = [...text];
+  const result = [];
+  let state = 'none';
+
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    const type = getCharType(ch);
+
+    let nextState = 'none';
+    for (let j = i + 1; j < chars.length; j++) {
+      const nType = getCharType(chars[j]);
+      if (nType === 'transparent') continue;
+      if (nType === 'dualJoining') { nextState = 'left'; break; }
+      if (nType === 'rightJoining') { nextState = 'left'; break; }
+      break;
+    }
+
+    if (type === 'transparent') {
+      result.push(ch);
+      continue;
+    }
+
+    if (type === 'nonJoining') {
+      result.push(getPresentationForm(ch, state, 'none'));
+      state = 'none';
+    } else if (type === 'rightJoining') {
+      if (state === 'right' || state === 'both') {
+        result.push(getPresentationForm(ch, 'right', nextState));
+      } else {
+        result.push(getPresentationForm(ch, 'none', nextState));
+      }
+      state = (nextState === 'left') ? 'right' : 'none';
+    } else if (type === 'dualJoining') {
+      if (state === 'right' || state === 'both') {
+        result.push(getPresentationForm(ch, 'right', nextState));
+        state = (nextState === 'left') ? 'both' : 'right';
+      } else {
+        result.push(getPresentationForm(ch, 'none', nextState));
+        state = (nextState === 'left') ? 'left' : 'none';
+      }
+    }
+  }
+
+  return result.join('');
+}
+
+function reverseWords(text) {
+  const words = text.split(/(\s+)/);
+  const arabicWords = [];
+  const indices = [];
+
+  words.forEach((word, i) => {
+    if (/[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(word)) {
+      arabicWords.push(word);
+      indices.push(i);
+    }
+  });
+
+  arabicWords.reverse();
+  indices.forEach((idx, i) => { words[idx] = arabicWords[i]; });
+  return words.join('');
+}
+
+function reverseChars(text) {
+  return [...text].reverse().join('');
+}
+
+function fixText() {
+  const input = document.getElementById('inputText').value;
+  if (!input.trim()) return;
+
+  let result = input;
+
+  if (document.getElementById('doReshape').checked) {
+    result = result.split('\n').map(line => reshapeArabic(line)).join('\n');
+  }
+
+  if (document.getElementById('doReverse').checked) {
+    result = result.split('\n').map(line => reverseWords(line)).join('\n');
+  }
+
+  if (document.getElementById('doReverseChars').checked) {
+    result = result.split('\n').map(line => reverseChars(line)).join('\n');
+  }
+
+  const font = document.getElementById('fontSelect').value;
+  const output = document.getElementById('outputText');
+  output.style.fontFamily = `'${font}', sans-serif`;
+  output.textContent = result;
+}
+
+function copyResult() {
+  const text = document.getElementById('outputText').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1500);
+  });
+}
+
+function clearAll() {
+  document.getElementById('inputText').value = '';
+  document.getElementById('outputText').textContent = '';
+}
+
+document.getElementById('inputText').addEventListener('input', fixText);
+</script>
+
+</body>
+</html>
