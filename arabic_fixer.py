@@ -22,12 +22,15 @@ except ImportError:
 try:
     import ctypes
     try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
     except Exception:
         try:
-            ctypes.windll.user32.SetProcessDPIAware()
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
-            pass
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
 except Exception:
     pass
 
@@ -159,10 +162,19 @@ class ArabicFixerApp:
         y = self.cfg.get("window_y")
         w = self.cfg.get("window_w", 500)
         h = self.cfg.get("window_h", 680)
+
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+
         if x is not None and y is not None:
+            if x < 0 or x > screen_w - 100 or y < 0 or y > screen_h - 100:
+                x = max(0, (screen_w - w) // 2)
+                y = max(0, (screen_h - h) // 2)
             self.root.geometry(f"{w}x{h}+{x}+{y}")
         else:
-            self.root.geometry(f"{w}x{h}")
+            x = max(0, (screen_w - w) // 2)
+            y = max(0, (screen_h - h) // 2)
+            self.root.geometry(f"{w}x{h}+{x}+{y}")
         self.root.attributes("-topmost", True)
         try:
             self.root.attributes("-alpha", self.cfg.get("opacity", 1.0))
